@@ -1,0 +1,53 @@
+// 左侧导航默认样式修改，慎改！！！
+.seOpen > .ivu-menu-submenu-title {
+    color: #fff !important;
+    background-color: #217FC3 !important;
+}
+
+
+.homeSe {
+    color: #fff !important;
+    background-color: $base-color !important;
+}
+
+.ivu-menu-vertical .ivu-menu-item:hover, .ivu-menu-vertical .ivu-menu-submenu-title:hover {
+    color: #fff;
+    background-color: $base-color;
+}
+
+.ivu-menu li > ul a {
+    font-size: 14px !important;
+    padding-left: 65px !important;
+}
+
+.ivu-menu li > ul :hover {
+    color: $base-color !important;
+    background-color: #fff !important;
+}
+
+.ivu-menu-light.ivu-menu-vertical .ivu-menu-item-active:not(.ivu-menu-submenu) {
+    background: #fff;
+}
+
+.ivu-menu-submenu {
+    font-size: 16px !important;
+}
+
+.ivu-menu-item > i {
+    padding-right: 5px !important;
+    margin: 0 !important;
+}
+
+.ivu-menu-submenu-title span > i, .ivu-menu-submenu-title > i {
+    margin: 0 !important;
+    padding-right: 5px !important;
+}
+
+.second-menu {
+    font-size: 14px !important;
+    padding-left: 24px !important;
+}
+
+.second-selected > .ivu-menu-submenu-title {
+    color: $base-color !important;
+}
