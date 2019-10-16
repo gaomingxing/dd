@@ -4,6 +4,7 @@ import Home from '@/views/home/home'
 import Test from '@/views/test/test'
 import Exercise from '@/views/test/exercise'
 import Gmx from '@/views/test/gmx'
+import memory_usage from '@/views/test/memory-usage'
 // import Exercise_test from '@/views/test/Exercise_test'
 
 Vue.use(Router);
@@ -57,6 +58,15 @@ let router = new Router({
             title: '高明星',
             meta: {
                 title: '高明星',
+            }
+        },
+        {
+            path: '/memory_usage',
+            name: 'memory_usage',
+            component: memory_usage,
+            title: '内存详情',
+            meta: {
+                title: '内存详情',
             }
         },
         // {

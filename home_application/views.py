@@ -2,6 +2,9 @@
 import sys
 import random
 import time
+import requests
+import json
+import base64
 
 from common.mymako import render_mako_context, render_json
 from blueking.component.shortcuts import get_client_by_user
@@ -14,6 +17,11 @@ sys.setdefaultencoding('utf8')
 
 # 通用成功返回
 SUCCESS_RETURN_DICT = {"result": True, "data": "success"}
+
+# 基本信息
+bk_app_code = 'memory-usage'
+bk_app_secret = 'cacc14e5-bc35-4d25-9e32-7e68879e3606'
+host_url = 'http://testdop.gwmdc.com'
 
 
 def home(request):
@@ -163,3 +171,165 @@ def update_user(request):
             return render_json({'result': False, 'msg': u'更新用户失败，请联系开发人员！'})
         else:
             return render_json({'result': False, 'msg': u'添加用户失败，请联系开发人员！'})
+
+
+def select_business(request):
+    '''获取业务'''
+    try:
+        url = host_url + '/api/c/compapi/v2/cc/search_business/'
+        params = {
+            'bk_app_code': bk_app_code,
+            'bk_app_secret': bk_app_secret,
+            "bk_username": 'admin',
+        }
+        res = requests.post(url, params).json()
+        return render_json({'result': True, 'data': res["data"]['info']})
+    except Exception as e:
+        return render_json({'result': False, 'message': u'获取业务失败，{}'.format(e)})
+
+
+def search_set(request):
+    '''获取业务下的集群'''
+    try:
+        bk_biz_id = json.loads(request.body)['bk_biz_id']
+        url = host_url + '/api/c/compapi/v2/cc/search_set/'
+        print bk_biz_id, "--------------", url
+        params = {
+            'bk_app_code': bk_app_code,
+            'bk_app_secret': bk_app_secret,
+            'bk_biz_id': bk_biz_id,
+            "bk_username": 'admin',
+        }
+        res = requests.post(url, params).json()
+        return render_json({'result': True, 'data': res["data"]['info']})
+    except Exception as e:
+        return render_json({'result': False, 'message': u'获取业务下集群失败，{}'.format(e)})
+
+
+def search_hosts(request):
+    '''获取业务下的集群下的主机'''
+    try:
+        bk_set_id = json.loads(request.body)['bk_set_id']
+        url = host_url + '/api/c/compapi/v2/cc/search_host/'
+        params = {
+            "bk_app_code": bk_app_code,
+            "bk_app_secret": bk_app_secret,
+            "bk_username": 'admin',
+            "condition": [
+                {
+                    "bk_obj_id": "set",
+                    "fields": [],
+                    "condition": [
+                        {
+                            "field": "bk_set_id",
+                            "operator": "$eq",
+                            "value": bk_set_id
+                        }
+                    ]
+                }
+            ]
+        }
+        res = requests.post(url, json.dumps(params)).json()
+        res_list = []
+        for host_item in res['data']['info']:
+            res_dict = {
+                'bk_host_innerip': host_item['host']['bk_host_innerip'],
+                'bk_os_name': host_item['host']['bk_os_name'],
+                'bk_cpu': host_item['host']['bk_cpu'],
+                'bk_host_name': host_item['host']['bk_host_name'],
+                'bk_inst_name': host_item['host']['bk_cloud_id'][0]['bk_inst_name']
+            }
+            res_list.append(res_dict)
+        return render_json({'result': True, 'data': res_list})
+    except Exception as e:
+        return render_json({'result': False, 'message': u'获取业务下集群下主机失败，{}'.format(e)})
+
+
+# --------------------------------------------------------------------------------------------------------
+# 查询主机基本信息
+def search_info(request):
+    host_ip = json.loads(request.body)['bk_host_innerip']
+    bk_biz_id = json.loads(request.body)['bk_biz_id']
+    res_tmp = fast_exe_script(host_ip, bk_biz_id)
+    res = json.loads(res_tmp.content)
+    if res['result'] is True:
+        job_instance_id = res['job_instance_id']
+        time.sleep(2)
+        log_content = get_job_instance_log(job_instance_id, bk_biz_id)
+        end_result_tmp = parse_log(log_content)
+        end_result = json.loads(end_result_tmp.content)
+        if end_result['result'] is True:
+            data = end_result['data']
+            return render_json({'result': True, 'data': data})
+        else:
+            return render_json({'result': False})
+    else:
+        return render_json({'result': False})
+
+
+# 快速执行脚本
+def fast_exe_script(host_ip, bk_biz_id):
+    ip_list = [
+        {
+            "ip": str(host_ip),
+            "bk_cloud_id": 0
+        }
+    ]
+    params = {
+        "bk_app_code": bk_app_code,
+        "bk_app_secret": bk_app_secret,
+        "bk_username": 'admin',
+        "bk_biz_id": bk_biz_id,
+        "script_content": base64.b64encode("free -m".encode('utf-8')),
+        "script_type": 1,
+        "account": 'root',
+        "ip_list": ip_list
+    }
+    url = host_url + '/api/c/compapi/v2/job/fast_execute_script/'
+    res = requests.post(url, json=params).json()
+    try:
+        job_id = res.get('data', None).get('job_instance_id', None)
+        if job_id:
+            return render_json({'result': True, 'job_instance_id': job_id})
+    except:
+        return render_json({'result': False})
+    return render_json({'result': False})
+
+
+# 获取日志信息
+def get_job_instance_log(job_instance_id, bk_biz_id):
+    # time.sleep(5)
+    url = host_url + '/api/c/compapi/v2/job/get_job_instance_log/'
+    params = {
+        "bk_app_code": bk_app_code,
+        "bk_app_secret": bk_app_secret,
+        "bk_username": "admin",
+        "bk_biz_id": bk_biz_id,
+        "job_instance_id": job_instance_id
+    }
+    res = requests.get(url, params).json()
+    print('job_id:{1},get log info:{0}'.format(res, job_instance_id))
+    log_content = res[u'data'][0][u'step_results'][0][u'ip_logs'][0][u'log_content']
+    return log_content
+
+
+# 解析日志->入库
+def parse_log(content):
+    data = []
+    print('content:{0}'.format(content))
+    data_list = content.strip().split('\n')
+    for item in data_list:
+        print('line:{0}'.format(item))
+        value_list = item.split()
+        if len(value_list) < 7:
+            value_list = value_list + [0, 0, 0, 0, 0, 0, 0][len(value_list):]
+        value_dict = {
+            'total': value_list[1],
+            'used': value_list[2],
+            'free': value_list[3],
+            'shared': value_list[4],
+            'cache': value_list[5],
+            'available': value_list[6],
+        }
+        data.append(value_dict)
+    return render_json({'result': True, 'data': data[1:2]})

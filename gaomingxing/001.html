@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div id="app">
+    {{ msg=='hello Vue!!!'? 'Y':'N' }}
+    {{ school.age }}
+    {{ school.address }}
+    {{ arr }}
+    <br>
+    <input type="text" v-model="msg">{{ msg }}
+    <div v-once="msg">{{ msg }}</div>
+    {{ a }}
+    <br>
+    <span>---------------------------------------------------</span>
+    <br>
+    <input type="text" v-model="value" @keyup.13="fn($event, 1)">
+    <ul>
+        <li v-for="i in values">{{ i }}</li>
+    </ul>
+    <span>---------------------------------------------------</span>
+    <div v-html="a"></div>
+    <br>
+    <ul>
+        <li v-for="i,k in arr">
+            {{ k }}-{{ i }}
+        </li>
+        <li v-for="value,key,index in school">
+            {{ index }}-{{ key }}-{{ value }}
+        </li>
+        <li v-for="str,index in 'ABCD'">
+            {{ index }}-{{ str }}
+        </li>
+        <li v-for="value in 20">{{ value }}</li>
+    </ul>
+</div>
+
+<script src="node_modules/vue/dist/vue.js"></script>
+<script>
+    let vm = new Vue({
+        el: '#app',
+        data: {
+            school: {name: '珠峰培训', age: "18"},
+            msg: "hello Vue!!!",
+            arr: [1, 2, 3],
+            a: '<h1>hello zfpx</h1>',
+            value: '',
+            values: [],
+        },
+        methods: {
+            fn(e) {
+                if (e.keyCode === 13) {
+                    this.values.push(this.value)
+                    this.value = ""
+                }
+            }
+        }
+    });
+    // vm.school = {...vm.school,...{address:'回龙观'}}
+    // vm.school = Object.assign({}, vm.school, {address:'回龙观'})
+    vm.$set(vm.school, 'address', '回龙观');
+    vm.arr = vm.arr.map(item => item + 1)
+</script>
+</body>
+</html>

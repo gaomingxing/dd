@@ -105,6 +105,14 @@
                             // }
                         ]
                     },
+                    {
+                        name: 'memory_usage',
+                        cnName: '内存详情',
+                        to: 'memory_usage',
+                        icon: 'ios-desktop',
+                        hasChild: false,
+                        children: []
+                    }
                 ],
             };
         },
